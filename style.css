@@ -344,3 +344,11 @@ button { color: inherit; }
   .combo-counter { top: 66px; padding: 5px 10px; font-size: 16px; letter-spacing: .1em; }
   .domain-touch { border-color: rgba(116, 230, 255, .7); color: #a9edff; background: #172b3c; }
 }
+
+
+@media (max-width: 390px) {
+  .touch-deck { gap: 6px; padding: 8px 4px; }
+  .touch-movement, .touch-actions { gap: 3px; }
+  .touch-button { min-width: 30px; padding: 0 4px; }
+  .guard-touch { min-width: 40px; }
+}

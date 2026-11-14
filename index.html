@@ -24,7 +24,7 @@
         <span><strong>CURSED</strong><small>ARENA / 00<span>1</span></small></span>
       </a>
       <div class="top-status"><i></i> TRAINING DOMAIN <span>•</span> TOKYO COLONY</div>
-      <div class="top-right"><span class="version">EARLY BUILD 0.2 / 3D</span><span class="sound-mark">JUJUTSU HIGH</span></div>
+      <div class="top-right"><span class="version">EARLY BUILD 0.3 / COMBAT</span><span class="sound-mark">JUJUTSU HIGH</span></div>
     </header>
 
     <section class="game-wrap" aria-label="Fighting game">
@@ -52,6 +52,7 @@
         <canvas id="gameCanvas" width="1200" height="675" aria-label="Real-time 3D JJK Cursed Arena. Use A and D to move, W to jump, S to guard, J and K to strike, L for cursed technique."></canvas>
         <div class="arena-scanline"></div>
         <div class="fight-callout" id="fightCallout" aria-live="polite">READY?</div>
+        <div class="combo-counter" id="comboCounter" aria-live="polite"></div>
 
         <section class="intro-screen" id="introScreen">
           <div class="intro-grid"></div>
@@ -131,6 +132,7 @@
         <div class="key-group"><span class="key">S</span><label>GUARD</label></div>
         <div class="key-group"><span class="key">J</span><span class="key">K</span><label>STRIKE</label></div>
         <div class="key-group"><span class="key special-key">L</span><label>TECHNIQUE</label></div>
+        <div class="key-group"><span class="key domain-key">O</span><label>DOMAIN</label></div>
         <div class="key-group"><span class="key">⇧</span><label>DASH</label></div>
       </div>
 
@@ -145,6 +147,7 @@
           <button class="touch-button" data-action="light">J</button>
           <button class="touch-button" data-action="heavy">K</button>
           <button class="touch-button special-touch" data-action="special">L</button>
+          <button class="touch-button domain-touch" data-action="domain">O</button>
         </div>
       </div>
     </section>

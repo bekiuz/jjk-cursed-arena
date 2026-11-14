@@ -29,6 +29,7 @@ Three.js is loaded as ES modules from jsDelivr, so an internet connection is req
 | J | Quick strike |
 | K | Heavy strike |
 | L | Character-specific cursed technique |
+| O | Domain Expansion (requires 100% cursed energy) |
 | R | Retry after a result |
 
 Touch controls are included for mobile devices.
@@ -41,7 +42,9 @@ Touch controls are included for mobile devices.
 - Three story missions: Jujutsu High, Cursed Womb / Detention Center and Geto's Night Parade chapter
 - Mission unlock progression saved in the browser
 - Enemy curse designs and increasing boss difficulty
-- Keyboard and touch combat, blocking, dash, special technique, health and cursed-energy meters
+- Keyboard and touch combat, blocking, dash, special technique, Domain Expansion at 100% cursed energy, health and cursed-energy meters
+- Hit combo tracking with best-combo result summary
+- Domain Expansion creates a temporary sure-hit arena field that pulses damage and slows the curse
 - Responsive interface and GitHub Pages deployment workflow
 
 ## Yuji GLB model

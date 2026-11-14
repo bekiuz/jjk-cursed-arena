@@ -5,11 +5,15 @@
   const ctx = canvas.getContext("2d");
   const $ = (id) => document.getElementById(id);
   const ui = {
-    intro: $("introScreen"), result: $("resultScreen"), start: $("startButton"),
+    intro: $("introScreen"), missions: $("missionScreen"), result: $("resultScreen"), start: $("startButton"),
+    missionStart: $("missionStartButton"), missionBack: $("missionBack"),
+    missionCards: Array.from(document.querySelectorAll(".mission-card")),
+    missionProgress: $("missionProgress"), nextMission: $("nextMissionButton"),
     rematch: $("rematchButton"), menu: $("menuButton"), timer: $("timer"),
     playerHealth: $("playerHealth"), playerEnergy: $("playerEnergy"),
     enemyHealth: $("enemyHealth"), enemyEnergy: $("enemyEnergy"),
-    playerName: $("playerName"), enemyName: $("enemyName"),
+    playerName: $("playerName"), enemyName: $("enemyName"), enemyGrade: $("enemyGrade"),
+    stageLabel: $("missionStageLabel"),
     hint: $("combatHint"), callout: $("fightCallout"),
     resultTitle: $("resultTitle"), resultMessage: $("resultMessage"),
     resultEyebrow: $("resultEyebrow")
@@ -42,6 +46,34 @@
     }
   };
 
+  const missions = [
+    {
+      title: "JUJUTSU HIGH", location: "TRAINING GROUNDS", opponent: "CURSED WRAITH",
+      grade: "CURSE / GRADE 2", description: "A controlled trial against a wandering cursed spirit.",
+      enemyHealth: 100, enemySpeed: .88, enemyDamage: 1,
+      config: { name: "CURSED WRAITH", hair: "#b9a0dc", outfit: "#191326", accent: "#c080ff", trim: "#f0ccff", speed: .88, technique: "VOID HOWL", glyph: "呪" }
+    },
+    {
+      title: "CURSED WOMB", location: "DETENTION CENTER", opponent: "CURSED WOMB",
+      grade: "CURSE / SPECIAL GRADE", description: "A veil descends over an abandoned detention center. The curse is stronger this time.",
+      enemyHealth: 128, enemySpeed: .98, enemyDamage: 1.12,
+      config: { name: "CURSED WOMB", hair: "#79314e", outfit: "#281321", accent: "#ff648d", trim: "#ffc2d3", speed: .98, technique: "WOMB PULSE", glyph: "胎" }
+    },
+    {
+      title: "GETO'S PLAN", location: "NIGHT PARADE / TOKYO", opponent: "CURSE MANIPULATOR",
+      grade: "BOSS / SPECIAL GRADE", description: "The Night Parade begins. Face the final opponent in this first story route.",
+      enemyHealth: 160, enemySpeed: 1.08, enemyDamage: 1.22,
+      config: { name: "CURSE MANIPULATOR", hair: "#253759", outfit: "#111b31", accent: "#70c4ff", trim: "#c4ebff", speed: 1.08, technique: "CURSE SWARM", glyph: "操" }
+    }
+  ];
+
+  let unlockedMission = 1;
+  try {
+    const savedProgress = Number(localStorage.getItem("jjk-cursed-arena-progress"));
+    if (Number.isFinite(savedProgress) && savedProgress >= 1) unlockedMission = Math.min(missions.length + 1, Math.floor(savedProgress));
+  } catch {}
+  let selectedMission = 0;
+  let missionIndex = 0;
   let selectedCharacter = "yuji";
   let mode = "intro";
   let player;
@@ -75,29 +107,74 @@
     const config = characters[characterKey] || characters.yuji;
     return {
       x, y: FLOOR, vx: 0, vy: 0, facing: isEnemy ? -1 : 1,
-      health: 100, energy: 100, isEnemy, characterKey, config,
+      health: 100, maxHealth: 100, energy: 100, damageMultiplier: 1, isEnemy, characterKey, config,
       attack: null, attackCooldown: .2, stun: 0, dashTime: 0,
       dashCooldown: 0, blocking: false, grounded: true,
       hitFlash: 0, defeated: false, aiWait: .3
     };
   }
 
+  function makeEnemy(mission) {
+    const fighter = makeFighter(855, true, "curse");
+    fighter.config = mission.config;
+    fighter.health = mission.enemyHealth;
+    fighter.maxHealth = mission.enemyHealth;
+    fighter.damageMultiplier = mission.enemyDamage;
+    return fighter;
+  }
+
+  function updateMissionMenu() {
+    ui.missionCards.forEach((card) => {
+      const index = Number(card.dataset.mission);
+      const available = index < unlockedMission;
+      card.disabled = !available;
+      card.classList.toggle("selected", index === selectedMission);
+      const status = card.querySelector(".mission-lock");
+      status.textContent = available ? (index < unlockedMission - 1 ? "CLEARED · REPLAY" : "AVAILABLE") : "LOCKED";
+    });
+    ui.missionProgress.textContent = `MISSIONS CLEARED ${Math.min(missions.length, unlockedMission - 1)} / 03`;
+    ui.missionStart.disabled = selectedMission >= unlockedMission;
+    ui.missionStart.style.opacity = ui.missionStart.disabled ? ".45" : "1";
+  }
+
+  function openMissions() {
+    mode = "missions";
+    ui.intro.classList.add("hidden");
+    ui.result.classList.add("hidden");
+    ui.missions.classList.remove("hidden");
+    updateMissionMenu();
+  }
+
+  function startMission(index) {
+    if (!Number.isInteger(index) || index < 0 || index >= missions.length || index >= unlockedMission) return;
+    missionIndex = index;
+    selectedMission = index;
+    resetMatch();
+    mode = "fight";
+    ui.intro.classList.add("hidden");
+    ui.missions.classList.add("hidden");
+    ui.result.classList.add("hidden");
+    announce("FIGHT!");
+  }
+
   function resetMatch() {
+    const mission = missions[missionIndex];
     player = makeFighter(345, false, selectedCharacter);
-    enemy = makeFighter(855, true, "curse");
-    enemy.config = { name: "CURSED WRAITH", hair: "#b9a0dc", outfit: "#191326", accent: "#c080ff", trim: "#f0ccff", speed: .88, technique: "VOID HOWL", glyph: "呪" };
+    enemy = makeEnemy(mission);
     roundTime = 90;
     particles = [];
     texts = [];
     shake = 0;
     ui.playerName.textContent = player.config.name;
-    ui.enemyName.textContent = "CURSED WRAITH";
+    ui.enemyName.textContent = mission.opponent;
+    ui.enemyGrade.textContent = mission.grade;
+    ui.stageLabel.textContent = `MISSION 0${missionIndex + 1} / 03`;
     ui.playerHealth.style.width = "100%";
     ui.playerEnergy.style.width = "100%";
     ui.enemyHealth.style.width = "100%";
     ui.enemyEnergy.style.width = "100%";
     ui.timer.textContent = "90";
-    ui.hint.textContent = "KEEP YOUR DISTANCE. READ THE CURSE.";
+    ui.hint.textContent = mission.location + " · " + mission.description.toUpperCase();
   }
 
   function announce(message) {
@@ -108,24 +185,26 @@
   }
 
   function startMatch() {
-    resetMatch();
-    mode = "fight";
-    ui.intro.classList.add("hidden");
-    ui.result.classList.add("hidden");
-    announce("FIGHT!");
+    startMission(missionIndex);
   }
 
   function finishMatch(won, timedOut = false) {
     if (mode !== "fight") return;
     mode = "result";
+    if (won) {
+      unlockedMission = Math.max(unlockedMission, Math.min(missions.length + 1, missionIndex + 2));
+      try { localStorage.setItem("jjk-cursed-arena-progress", String(unlockedMission)); } catch {}
+    }
+    const hasNext = won && missionIndex < missions.length - 1;
     ui.result.classList.remove("hidden");
-    ui.resultEyebrow.textContent = timedOut ? "TIME EXPIRED" : "MATCH COMPLETE";
-    ui.resultTitle.textContent = won ? "VICTORY" : "DEFEAT";
+    ui.resultEyebrow.textContent = timedOut ? "TIME EXPIRED" : "STORY RESULT";
+    ui.resultTitle.textContent = won && !hasNext ? "ROUTE CLEARED" : won ? "VICTORY" : "DEFEAT";
     ui.resultTitle.style.color = won ? "#d8c7ff" : "#ff9aad";
     ui.resultMessage.textContent = won
-      ? "The curse has been exorcised. The domain is yours."
-      : "The curse overwhelmed you. Regroup and try again.";
-    announce(won ? "EXORCISED" : "CURSED");
+      ? (hasNext ? `${missions[missionIndex].title} cleared. The next chapter is now unlocked.` : "All three missions are complete. The first story route is cleared.")
+      : "The curse overwhelmed you. Regroup and retry this mission.";
+    ui.nextMission.classList.toggle("hidden", !hasNext);
+    announce(won ? (hasNext ? "CHAPTER CLEAR" : "ROUTE CLEARED") : "CURSED");
   }
 
   function spawnBurst(x, y, color, count = 15, power = 240) {
@@ -175,7 +254,8 @@
     if (dx * attacker.facing < 0 || Math.abs(dx) > attack.range || Math.abs(target.y - attacker.y) > 115) return;
     attack.hit = true;
     const guarding = target.blocking && target.grounded;
-    const damage = guarding ? Math.max(2, Math.round(attack.damage * .22)) : attack.damage;
+    const baseDamage = Math.round(attack.damage * (attacker.damageMultiplier || 1));
+    const damage = guarding ? Math.max(2, Math.round(baseDamage * .22)) : baseDamage;
     target.health = Math.max(0, target.health - damage);
     target.hitFlash = .15;
     target.stun = guarding ? .08 : attack.kind === "heavy" || attack.kind === "special" ? .3 : .18;
@@ -234,7 +314,7 @@
         player.vx *= .8;
       }
       player.blocking = held.guard && player.grounded && !player.attack;
-      if (queued.has("jump") && player.grounded && !player.blocking) {
+      if (held.jump && player.grounded && !player.blocking) {
         player.vy = -630;
         player.grounded = false;
       }
@@ -266,9 +346,9 @@
     if (!enemy.attack && enemy.aiWait <= 0) {
       enemy.aiWait = .34 + Math.random() * .35;
       if (distance > 175) {
-        enemy.vx = Math.sign(dx) * 185;
+        enemy.vx = Math.sign(dx) * 185 * enemy.config.speed;
       } else if (distance < 105 && Math.random() < .32) {
-        enemy.vx = -Math.sign(dx) * 105;
+        enemy.vx = -Math.sign(dx) * 105 * enemy.config.speed;
       } else if (distance < 155) {
         const roll = Math.random();
         if (roll < .55) startAttack(enemy, "light");
@@ -279,8 +359,9 @@
       }
     }
     if (distance > 205 && !enemy.attack && enemy.stun <= 0) {
-      enemy.vx += Math.sign(dx) * 360 * dt;
-      enemy.vx = Math.max(-210, Math.min(210, enemy.vx));
+      enemy.vx += Math.sign(dx) * 360 * enemy.config.speed * dt;
+      const maxSpeed = 210 * enemy.config.speed;
+      enemy.vx = Math.max(-maxSpeed, Math.min(maxSpeed, enemy.vx));
     }
   }
 
@@ -305,9 +386,9 @@
     for (const t of texts) t.y -= 38 * dt;
     shake = Math.max(0, shake - dt);
 
-    ui.playerHealth.style.width = player.health + "%";
+    ui.playerHealth.style.width = (player.health / player.maxHealth * 100) + "%";
     ui.playerEnergy.style.width = player.energy + "%";
-    ui.enemyHealth.style.width = enemy.health + "%";
+    ui.enemyHealth.style.width = (enemy.health / enemy.maxHealth * 100) + "%";
     ui.enemyEnergy.style.width = enemy.energy + "%";
     ui.timer.textContent = String(Math.ceil(roundTime)).padStart(2, "0");
     if (roundTime <= 0) finishMatch(player.health >= enemy.health, true);
@@ -398,30 +479,30 @@
     ctx.scale(fighter.facing, 1);
     if (fighter.isEnemy) {
       const aura = ctx.createRadialGradient(0, -95, 12, 0, -95, 105);
-      aura.addColorStop(0, "rgba(169,94,244,.28)");
-      aura.addColorStop(1, "rgba(169,94,244,0)");
+      aura.addColorStop(0, config.accent + "55");
+      aura.addColorStop(1, config.accent + "00");
       ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(0, -95, 105, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = "rgba(188,121,255,.65)"; ctx.lineWidth = 5; ctx.lineCap = "round";
+      ctx.strokeStyle = config.accent; ctx.lineWidth = 5; ctx.lineCap = "round";
       for (let i = 0; i < 3; i++) {
         const sway = Math.sin(elapsed * 3 + i * 2) * 12;
         ctx.beginPath(); ctx.moveTo(-24 + i * 19, -90); ctx.quadraticCurveTo(-65 + sway, -145, -48 + sway, -205 - i * 9); ctx.stroke();
       }
-      ctx.fillStyle = "#20172e";
-      ctx.strokeStyle = "#aa72d8"; ctx.lineWidth = 3;
+      ctx.fillStyle = config.outfit;
+      ctx.strokeStyle = config.accent; ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(-34, -132); ctx.quadraticCurveTo(-55, -92, -35, -39);
       ctx.quadraticCurveTo(0, -17, 38, -42); ctx.lineTo(27, -130);
       ctx.quadraticCurveTo(0, -154, -34, -132); ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = "#32213f";
+      ctx.fillStyle = config.hair;
       ctx.beginPath(); ctx.ellipse(0, -160, 30, 34, -.12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = "#f5c9ff";
+      ctx.fillStyle = config.trim;
       ctx.beginPath(); ctx.ellipse(-11, -162, 5, 3, -.1, 0, Math.PI * 2); ctx.ellipse(11, -162, 5, 3, .1, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = "#d792ff"; ctx.lineWidth = 4;
+      ctx.strokeStyle = config.accent; ctx.lineWidth = 4;
       ctx.beginPath(); ctx.moveTo(-19, -180); ctx.lineTo(-31, -199); ctx.moveTo(18, -180); ctx.lineTo(31, -202); ctx.stroke();
-      ctx.strokeStyle = "#5e3877"; ctx.lineWidth = 15;
+      ctx.strokeStyle = config.outfit; ctx.lineWidth = 15;
       ctx.beginPath(); ctx.moveTo(-27, -121); ctx.lineTo(-51, -82); ctx.lineTo(-37, -62); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(26, -121); ctx.lineTo(48, -82); ctx.lineTo(34, -62); ctx.stroke();
-      ctx.fillStyle = "#c080ff"; ctx.beginPath(); ctx.arc(34, -61, 9, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = config.trim; ctx.beginPath(); ctx.arc(34, -61, 9, 0, Math.PI * 2); ctx.fill();
     } else {
       const glow = ctx.createRadialGradient(0, -110, 5, 0, -110, fighter.attack && fighter.attack.kind === "special" ? 150 : 86);
       glow.addColorStop(0, fighter.attack && fighter.attack.kind === "special" ? config.accent + "55" : config.accent + "18");
@@ -529,10 +610,9 @@
     ctx.save();
     if (shake > 0) ctx.translate((Math.random() - .5) * shake * 36, (Math.random() - .5) * shake * 28);
     drawBackground();
-    if (mode === "intro") {
+    if (mode === "intro" || mode === "missions") {
       const previewPlayer = makeFighter(430, false, selectedCharacter);
-      const previewEnemy = makeFighter(835, true, "curse");
-      previewEnemy.config = { name: "CURSED WRAITH", hair: "#b9a0dc", outfit: "#191326", accent: "#c080ff", trim: "#f0ccff", speed: .88, technique: "VOID HOWL", glyph: "呪" };
+      const previewEnemy = makeEnemy(missions[selectedMission]);
       drawFighter(previewPlayer);
       drawFighter(previewEnemy);
     } else {
@@ -583,14 +663,24 @@
     });
   });
 
-  ui.start.addEventListener("click", startMatch);
-  ui.rematch.addEventListener("click", startMatch);
-  ui.menu.addEventListener("click", () => {
+  ui.start.addEventListener("click", openMissions);
+  ui.missionStart.addEventListener("click", () => startMission(selectedMission));
+  ui.missionBack.addEventListener("click", () => {
     mode = "intro";
-    ui.result.classList.add("hidden");
+    ui.missions.classList.add("hidden");
     ui.intro.classList.remove("hidden");
-    particles = [];
   });
+  ui.missionCards.forEach((card) => {
+    card.addEventListener("click", () => {
+      const index = Number(card.dataset.mission);
+      if (index >= unlockedMission) return;
+      selectedMission = index;
+      updateMissionMenu();
+    });
+  });
+  ui.rematch.addEventListener("click", startMatch);
+  ui.nextMission.addEventListener("click", () => startMission(missionIndex + 1));
+  ui.menu.addEventListener("click", openMissions);
 
   document.querySelectorAll(".touch-button").forEach((button) => {
     const action = button.dataset.action;

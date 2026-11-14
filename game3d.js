@@ -1,5 +1,6 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js";
+import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/utils/SkeletonUtils.js";
 
 (() => {
   "use strict";
@@ -376,8 +377,8 @@ import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/
     return fighter.isEnemy ? buildCurseFighter(fighter) : buildHumanFighter(fighter);
   }
 
-  function makeFighter(x, isEnemy, characterKey) {
-    const config = characters[characterKey] || characters.yuji;
+  function makeFighter(x, isEnemy, characterKey, customConfig = null) {
+    const config = customConfig || characters[characterKey] || characters.yuji;
     const fighter = {
       x, y: FLOOR, vx: 0, vy: 0, facing: isEnemy ? -1 : 1,
       health: 100, maxHealth: 100, energy: 100, damageMultiplier: 1,
@@ -388,20 +389,15 @@ import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/
     };
     fighter.visual = buildFighterModel(fighter);
     fighterRoot.add(fighter.visual.root);
+    if (!isEnemy && characterKey === "yuji") attachYujiGLB(fighter);
     return fighter;
   }
 
   function makeEnemy(mission) {
-    const fighter = makeFighter(855, true, "curse");
-    fighter.config = mission.config;
+    const fighter = makeFighter(855, true, "curse", mission.config);
     fighter.health = mission.enemyHealth;
     fighter.maxHealth = mission.enemyHealth;
     fighter.damageMultiplier = mission.enemyDamage;
-    fighter.visual.root.traverse((obj) => {
-      if (!obj.isMesh) return;
-      const oldColor = obj.material && obj.material.color ? obj.material.color.getHexString() : "";
-      if (oldColor === "9c83bd") obj.material.color.set(mission.config.skin || "#b7a0ca");
-    });
     return fighter;
   }
 
@@ -801,6 +797,7 @@ import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/
     v.auraRing.rotation.z += dt * (fighter.isEnemy ? -1.1 : .75);
     v.auraRing.material.opacity = .13 + (Math.sin(elapsed * 3.2) + 1) * .06 + (fighter.attack && fighter.attack.kind === "special" ? .24 : 0);
     if (v.headGroup) v.headGroup.rotation.z = idle * .018;
+    if (v.mixer) v.mixer.update(dt);
     if (fighter.isEnemy) {
       v.root.position.y += Math.sin(elapsed * 3.5) * .055;
       v.body.rotation.x = Math.sin(elapsed * 2.7) * .035;
@@ -907,8 +904,46 @@ import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/
   const loader = new GLTFLoader();
   const modelHint = document.createElement("div");
   modelHint.className = "model-status";
-  modelHint.textContent = "3D CHARACTER SYSTEM · PROCEDURAL ANIME MODELS";
+  modelHint.textContent = "3D CHARACTER SYSTEM · SMOOTH ANIME MODELS";
   document.querySelector(".arena-caption")?.appendChild(modelHint);
+  let yujiGltf = null;
+  let yujiLoadStarted = false;
+  function attachYujiGLB(fighter) {
+    const attach = (gltf) => {
+      if (!fighter || fighter.isEnemy || fighter.characterKey !== "yuji") return;
+      const model = cloneSkinnedModel(gltf.scene);
+      const bounds = new THREE.Box3().setFromObject(model);
+      const size = new THREE.Vector3();
+      bounds.getSize(size);
+      if (!size.y || !Number.isFinite(size.y)) return;
+      model.scale.setScalar(2.12 / size.y);
+      const scaledBounds = new THREE.Box3().setFromObject(model);
+      const center = new THREE.Vector3();
+      scaledBounds.getCenter(center);
+      model.position.set(-center.x, -scaledBounds.min.y, -center.z);
+      model.traverse((object) => {
+        if (object.isMesh) { object.castShadow = true; object.receiveShadow = true; }
+      });
+      fighter.visual.body.visible = false;
+      fighter.visual.root.add(model);
+      fighter.visual.externalModel = model;
+      if (gltf.animations && gltf.animations.length) {
+        fighter.visual.mixer = new THREE.AnimationMixer(model);
+        fighter.visual.mixer.clipAction(gltf.animations[0]).play();
+      }
+      modelHint.textContent = "YUJI GLB LOADED · 3D MODEL ACTIVE";
+    };
+    if (yujiGltf) { attach(yujiGltf); return; }
+    if (yujiLoadStarted) return;
+    yujiLoadStarted = true;
+    const modelUrl = new URL("./assets/characters/test-anime-fighter.glb", import.meta.url).href;
+    loader.load(modelUrl, (gltf) => {
+      yujiGltf = gltf;
+      attach(gltf);
+    }, undefined, () => {
+      modelHint.textContent = "3D ANIME MODEL · GLB ASSET NOT IN REPOSITORY YET";
+    });
+  }
 
   resetMatch();
   resize();

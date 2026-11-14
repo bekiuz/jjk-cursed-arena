@@ -44,7 +44,7 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
   scene.fog = new THREE.FogExp2("#171329", 0.025);
 
   const camera = new THREE.PerspectiveCamera(34, 16 / 9, 0.1, 90);
-  camera.position.set(0, 4.15, 17.5);
+  camera.position.set(0, 3.75, 13.6);
   camera.lookAt(0, 1.45, 0);
 
   const clock = new THREE.Clock();
@@ -302,11 +302,11 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
       addMesh(headGroup, new THREE.SphereGeometry(.055, 14, 12), materials.gold, [.22, .035, .12]);
     }
 
-    const leftLeg = addLimb(body, -.145, .83, .105, .54, pantsMat);
-    const rightLeg = addLimb(body, .145, .83, .105, .54, pantsMat);
+    const leftLeg = addLimb(body, -.145, .83, .105, .68, pantsMat);
+    const rightLeg = addLimb(body, .145, .83, .105, .68, pantsMat);
     for (const leg of [leftLeg, rightLeg]) {
-      addMesh(leg, new THREE.SphereGeometry(.14, 18, 14), materials.shoe, [0, -.53, .08], [1.0, .62, 1.55]);
-      addMesh(leg, new THREE.TorusGeometry(.09, .018, 6, 18), trimMat, [0, -.41, .01]);
+      addMesh(leg, new THREE.SphereGeometry(.14, 18, 14), materials.shoe, [0, -.73, .08], [1.0, .62, 1.55]);
+      addMesh(leg, new THREE.TorusGeometry(.09, .018, 6, 18), trimMat, [0, -.61, .01]);
     }
     const leftArm = addLimb(body, -.34, 1.47, .09, .42, outfitMat);
     const rightArm = addLimb(body, .34, 1.47, .09, .42, outfitMat);
@@ -738,10 +738,10 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
     }
     if (shake > 0) {
       camera.position.x = (Math.random() - .5) * shake * .8;
-      camera.position.y = 4.15 + (Math.random() - .5) * shake * .55;
+      camera.position.y = 3.75 + (Math.random() - .5) * shake * .55;
     } else {
       camera.position.x = THREE.MathUtils.damp(camera.position.x, 0, 8, dt);
-      camera.position.y = THREE.MathUtils.damp(camera.position.y, 4.15, 8, dt);
+      camera.position.y = THREE.MathUtils.damp(camera.position.y, 3.75, 8, dt);
     }
   }
 
@@ -911,6 +911,10 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
   function attachYujiGLB(fighter) {
     const attach = (gltf) => {
       if (!fighter || fighter !== player || fighter.isEnemy || fighter.characterKey !== "yuji") return;
+      if (!gltf.animations || gltf.animations.length === 0) {
+        modelHint.textContent = "YUJI GLB FOUND · NO ANIMATION CLIPS · ANIMATED 3D RIG ACTIVE";
+        return;
+      }
       const model = cloneSkinnedModel(gltf.scene);
       const bounds = new THREE.Box3().setFromObject(model);
       const size = new THREE.Vector3();

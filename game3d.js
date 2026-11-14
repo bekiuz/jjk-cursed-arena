@@ -17,7 +17,7 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
     playerHealth: $("playerHealth"), playerEnergy: $("playerEnergy"),
     enemyHealth: $("enemyHealth"), enemyEnergy: $("enemyEnergy"),
     playerName: $("playerName"), enemyName: $("enemyName"), enemyGrade: $("enemyGrade"),
-    stageLabel: $("missionStageLabel"), hint: $("combatHint"), callout: $("fightCallout"),
+    stageLabel: $("missionStageLabel"), hint: $("combatHint"), callout: $("fightCallout"), combo: $("comboCounter"),
     resultTitle: $("resultTitle"), resultMessage: $("resultMessage"), resultEyebrow: $("resultEyebrow")
   };
 
@@ -54,6 +54,9 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
   scene.add(fighterRoot);
   const effectsRoot = new THREE.Group();
   scene.add(effectsRoot);
+  const domainRoot = new THREE.Group();
+  domainRoot.visible = false;
+  scene.add(domainRoot);
 
   const hemi = new THREE.HemisphereLight("#c9c4ff", "#17101f", 1.9);
   scene.add(hemi);
@@ -152,6 +155,10 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
   let particles = [];
   let popups = [];
   let queued = new Set();
+  let comboCount = 0;
+  let comboTimer = 0;
+  let bestCombo = 0;
+  let domainState = null;
   const held = { left: false, right: false, jump: false, guard: false };
   const keyMap = {
     a: "left", d: "right", w: "jump", s: "guard",
@@ -450,6 +457,11 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
   }
 
   function resetMatch() {
+    endDomain(false);
+    comboCount = 0;
+    comboTimer = 0;
+    bestCombo = 0;
+    ui.combo.classList.remove("show");
     const mission = missions[missionIndex];
     clearFighters();
     player = makeFighter(345, false, selectedCharacter);
@@ -481,12 +493,117 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
     ui.callout.classList.add("show");
   }
 
+  function clearDomainVisual() {
+    while (domainRoot.children.length) {
+      const child = domainRoot.children[0];
+      domainRoot.remove(child);
+      child.traverse((object) => {
+        if (object.geometry) object.geometry.dispose();
+        if (object.material) {
+          if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose());
+          else object.material.dispose();
+        }
+      });
+    }
+    domainRoot.visible = false;
+  }
+
+  function endDomain(showMessage = false) {
+    if (!domainState) {
+      clearDomainVisual();
+      return;
+    }
+    scene.background.copy(domainState.background);
+    scene.fog.color.copy(domainState.fogColor);
+    scene.fog.density = domainState.fogDensity;
+    domainState = null;
+    clearDomainVisual();
+    if (showMessage && mode === "fight") announce("DOMAIN ENDED");
+  }
+
+  function activateDomain() {
+    if (mode !== "fight" || !player || domainState) return;
+    if (player.energy < 99.5) {
+      ui.hint.textContent = "DOMAIN NEEDS 100% CURSED ENERGY.";
+      popText(player.x, player.y - 150, "ENERGY NOT FULL", "#91ddff");
+      return;
+    }
+    player.energy = 0;
+    const accent = player.config.accent || "#a78bff";
+    domainState = {
+      time: 6.2,
+      pulse: .42,
+      background: scene.background.clone(),
+      fogColor: scene.fog.color.clone(),
+      fogDensity: scene.fog.density
+    };
+    clearDomainVisual();
+    domainRoot.visible = true;
+    const shellMaterial = new THREE.MeshBasicMaterial({
+      color: accent, transparent: true, opacity: .105,
+      side: THREE.BackSide, wireframe: true, depthWrite: false
+    });
+    const shell = new THREE.Mesh(new THREE.SphereGeometry(8.2, 48, 32), shellMaterial);
+    shell.position.set(0, 3.15, -1.15);
+    domainRoot.add(shell);
+    const innerMaterial = new THREE.MeshBasicMaterial({
+      color: "#ffffff", transparent: true, opacity: .035,
+      side: THREE.BackSide, depthWrite: false
+    });
+    const innerShell = new THREE.Mesh(new THREE.SphereGeometry(7.65, 32, 24), innerMaterial);
+    innerShell.position.copy(shell.position);
+    domainRoot.add(innerShell);
+    for (let i = 0; i < 4; i++) {
+      const ringMaterial = new THREE.MeshBasicMaterial({
+        color: i % 2 ? "#ffffff" : accent, transparent: true,
+        opacity: .56 - i * .08, depthWrite: false
+      });
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(3.1 + i * .92, .025 + i * .006, 8, 96), ringMaterial);
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(0, .035 + i * .012, -1.15);
+      domainRoot.add(ring);
+    }
+    const domainLight = new THREE.PointLight(accent, 78, 18, 2);
+    domainLight.position.set(0, 4.2, 1.5);
+    domainRoot.add(domainLight);
+    scene.background.set("#080615");
+    scene.fog.color.set(accent);
+    scene.fog.density = .038;
+    spawnBurst(player.x, player.y - 110, accent, 42, 3.7);
+    announce("DOMAIN EXPANSION");
+    ui.hint.textContent = "SURE-HIT FIELD ACTIVE · 6 SECONDS";
+  }
+
+  function updateDomain(dt) {
+    if (!domainState || mode !== "fight") return;
+    domainState.time -= dt;
+    domainState.pulse -= dt;
+    domainRoot.rotation.y += dt * .24;
+    if (domainState.pulse <= 0 && enemy && !enemy.defeated) {
+      const damage = 11 + missionIndex * 2;
+      enemy.health = Math.max(0, enemy.health - damage);
+      enemy.stun = Math.max(enemy.stun, .16);
+      enemy.hitFlash = .14;
+      spawnBurst(enemy.x, enemy.y - 100, player.config.accent, 14, 2.2);
+      popText(enemy.x, enemy.y - 145, "DOMAIN " + damage, "#e5d8ff");
+      shake = Math.max(shake, .13);
+      domainState.pulse = 1.05;
+      if (enemy.health <= 0) {
+        enemy.defeated = true;
+        finishMatch(true);
+        return;
+      }
+    }
+    if (domainState.time <= 0) endDomain(true);
+  }
+
   function startMatch() {
     startMission(missionIndex);
   }
 
   function finishMatch(won, timedOut = false) {
     if (mode !== "fight") return;
+    endDomain(false);
     mode = "result";
     if (won) {
       unlockedMission = Math.max(unlockedMission, Math.min(missions.length + 1, missionIndex + 2));
@@ -497,9 +614,10 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
     ui.resultEyebrow.textContent = timedOut ? "TIME EXPIRED" : "STORY RESULT";
     ui.resultTitle.textContent = won && !hasNext ? "ROUTE CLEARED" : won ? "VICTORY" : "DEFEAT";
     ui.resultTitle.style.color = won ? "#d8c7ff" : "#ff9aad";
-    ui.resultMessage.textContent = won
+    const comboSummary = bestCombo > 0 ? " Best combo: " + bestCombo + " hits." : "";
+    ui.resultMessage.textContent = (won
       ? (hasNext ? missions[missionIndex].title + " cleared. The next chapter is now unlocked." : "All three missions are complete. The first story route is cleared.")
-      : "The curse overwhelmed you. Regroup and retry this mission.";
+      : "The curse overwhelmed you. Regroup and retry this mission.") + comboSummary;
     ui.nextMission.classList.toggle("hidden", !hasNext);
     announce(won ? (hasNext ? "CHAPTER CLEAR" : "ROUTE CLEARED") : "CURSED");
   }
@@ -591,6 +709,17 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
     const baseDamage = Math.round(attack.damage * (attacker.damageMultiplier || 1));
     const damage = guarding ? Math.max(2, Math.round(baseDamage * .22)) : baseDamage;
     target.health = Math.max(0, target.health - damage);
+    if (attacker === player && !guarding) {
+      comboCount = comboTimer > 0 ? comboCount + 1 : 1;
+      comboTimer = 1.35;
+      bestCombo = Math.max(bestCombo, comboCount);
+      ui.combo.textContent = comboCount + " HIT COMBO";
+      ui.combo.classList.add("show");
+    } else if (attacker === enemy) {
+      comboCount = 0;
+      comboTimer = 0;
+      ui.combo.classList.remove("show");
+    }
     target.hitFlash = .15;
     target.stun = guarding ? .08 : attack.kind === "heavy" || attack.kind === "special" ? .3 : .18;
     target.vx = attacker.facing * (guarding ? 95 : attack.kind === "special" ? 420 : attack.kind === "heavy" ? 300 : 190);
@@ -656,6 +785,7 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
       if (queued.has("light")) startAttack(player, "light");
       if (queued.has("heavy")) startAttack(player, "heavy");
       if (queued.has("special")) startAttack(player, "special");
+      if (queued.has("domain")) activateDomain();
     } else player.blocking = false;
   }
 
@@ -681,7 +811,8 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
       } else if (distance < 285 && enemy.energy >= 55 && Math.random() < .24) startAttack(enemy, "special");
     }
     if (distance > 205 && !enemy.attack && enemy.stun <= 0) {
-      enemy.vx += Math.sign(dx) * 360 * enemy.config.speed * dt;
+      const domainSlow = domainState ? .58 : 1;
+      enemy.vx += Math.sign(dx) * 360 * enemy.config.speed * domainSlow * dt;
       const maxSpeed = 210 * enemy.config.speed;
       enemy.vx = Math.max(-maxSpeed, Math.min(maxSpeed, enemy.vx));
     }
@@ -695,6 +826,14 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
       updateEnemy(dt);
       updateFighterPhysics(player, dt);
       updateFighterPhysics(enemy, dt);
+      updateDomain(dt);
+      if (comboTimer > 0) {
+        comboTimer -= dt;
+        if (comboTimer <= 0) {
+          comboCount = 0;
+          ui.combo.classList.remove("show");
+        }
+      }
       player.facing = enemy.x < player.x ? -1 : 1;
       enemy.facing = player.x < enemy.x ? -1 : 1;
       queued.clear();
@@ -835,7 +974,7 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
     if ([" ", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) event.preventDefault();
     if (keyMap[key]) setHeld(keyMap[key], true);
     if (event.repeat) return;
-    const actions = { j: "light", k: "heavy", l: "special", Shift: "dash", r: "restart" };
+    const actions = { j: "light", k: "heavy", l: "special", o: "domain", Shift: "dash", r: "restart" };
     if (actions[key]) {
       if (actions[key] === "restart") {
         if (mode === "result") startMatch();
@@ -889,6 +1028,7 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
       else if (action === "light") queued.add("light");
       else if (action === "heavy") queued.add("heavy");
       else if (action === "special") queued.add("special");
+      else if (action === "domain") queued.add("domain");
     };
     const up = (event) => {
       event.preventDefault();

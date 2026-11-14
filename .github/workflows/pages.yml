@@ -24,7 +24,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Check game JavaScript
-        run: node --check game.js
+        run: |
+          node --check game.js
+          node --check game3d.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload site

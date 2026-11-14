@@ -27,22 +27,26 @@
     yuji: {
       name: "YUJI ITADORI", hair: "#ed9aaa", outfit: "#242538",
       accent: "#ff7598", trim: "#f0d3de", speed: 1,
-      technique: "DIVERGENT FIST", glyph: "虎"
+      technique: "DIVERGENT FIST", glyph: "虎",
+      special: { duration: .58, active: [.15, .4], damage: 30, range: 180, cost: 32, label: "DIVERGENT FIST" }
     },
     gojo: {
       name: "SATORU GOJO", hair: "#dcecff", outfit: "#111c31",
       accent: "#79dfff", trim: "#b3d5f5", speed: .96,
-      technique: "LIMITLESS", glyph: "六"
+      technique: "LIMITLESS", glyph: "六",
+      special: { duration: .72, active: [.2, .53], damage: 24, range: 390, cost: 42, label: "LIMITLESS" }
     },
     megumi: {
       name: "MEGUMI FUSHIGURO", hair: "#172033", outfit: "#1a263d",
       accent: "#879bff", trim: "#b1c2ff", speed: 1.04,
-      technique: "SHADOW STYLE", glyph: "影"
+      technique: "SHADOW STYLE", glyph: "影",
+      special: { duration: .7, active: [.19, .5], damage: 28, range: 260, cost: 36, label: "SHADOW STYLE" }
     },
     nobara: {
       name: "NOBARA KUGISAKI", hair: "#b66b43", outfit: "#34293a",
       accent: "#ffb16d", trim: "#f3c9a1", speed: 1.02,
-      technique: "RESONANCE", glyph: "釘"
+      technique: "RESONANCE", glyph: "釘",
+      special: { duration: .66, active: [.18, .48], damage: 23, range: 350, cost: 34, label: "RESONANCE" }
     }
   };
 
@@ -51,19 +55,22 @@
       title: "JUJUTSU HIGH", location: "TRAINING GROUNDS", opponent: "CURSED WRAITH",
       grade: "CURSE / GRADE 2", description: "A controlled trial against a wandering cursed spirit.",
       enemyHealth: 100, enemySpeed: .88, enemyDamage: 1,
-      config: { name: "CURSED WRAITH", hair: "#b9a0dc", outfit: "#191326", accent: "#c080ff", trim: "#f0ccff", speed: .88, technique: "VOID HOWL", glyph: "呪" }
+      scene: { top: "#111020", mid: "#25203b", bottom: "#100e18", haze: "rgba(145,91,206,.24)", buildings: "#171424", floor: "rgba(101,70,143,.18)", grid: "rgba(180,147,236,.16)" },
+      config: { name: "CURSED WRAITH", hair: "#b9a0dc", outfit: "#191326", accent: "#c080ff", trim: "#f0ccff", speed: .88, technique: "VOID HOWL", glyph: "呪", special: { duration: .7, active: [.2,.48], damage: 22, range: 300, cost: 38, label: "VOID HOWL" } }
     },
     {
       title: "CURSED WOMB", location: "DETENTION CENTER", opponent: "CURSED WOMB",
       grade: "CURSE / SPECIAL GRADE", description: "A veil descends over an abandoned detention center. The curse is stronger this time.",
       enemyHealth: 128, enemySpeed: .98, enemyDamage: 1.12,
-      config: { name: "CURSED WOMB", hair: "#79314e", outfit: "#281321", accent: "#ff648d", trim: "#ffc2d3", speed: .98, technique: "WOMB PULSE", glyph: "胎" }
+      scene: { top: "#180c18", mid: "#3a182b", bottom: "#100b14", haze: "rgba(255,74,130,.18)", buildings: "#21101f", floor: "rgba(145,38,78,.2)", grid: "rgba(255,120,165,.14)" },
+      config: { name: "CURSED WOMB", hair: "#79314e", outfit: "#281321", accent: "#ff648d", trim: "#ffc2d3", speed: .98, technique: "WOMB PULSE", glyph: "胎", special: { duration: .72, active: [.2,.5], damage: 25, range: 305, cost: 38, label: "WOMB PULSE" } }
     },
     {
       title: "GETO'S PLAN", location: "NIGHT PARADE / TOKYO", opponent: "CURSE MANIPULATOR",
       grade: "BOSS / SPECIAL GRADE", description: "The Night Parade begins. Face the final opponent in this first story route.",
       enemyHealth: 160, enemySpeed: 1.08, enemyDamage: 1.22,
-      config: { name: "CURSE MANIPULATOR", hair: "#253759", outfit: "#111b31", accent: "#70c4ff", trim: "#c4ebff", speed: 1.08, technique: "CURSE SWARM", glyph: "操" }
+      scene: { top: "#07131f", mid: "#122d46", bottom: "#080d18", haze: "rgba(60,168,255,.2)", buildings: "#0b1c2e", floor: "rgba(38,108,162,.2)", grid: "rgba(105,190,255,.16)" },
+      config: { name: "CURSE MANIPULATOR", hair: "#253759", outfit: "#111b31", accent: "#70c4ff", trim: "#c4ebff", speed: 1.08, technique: "CURSE SWARM", glyph: "操", special: { duration: .78, active: [.22,.56], damage: 30, range: 340, cost: 42, label: "CURSE SWARM" } }
     }
   ];
 
@@ -230,7 +237,8 @@
       heavy: { duration: .5, active: [.15, .34], damage: 16, range: 150, cost: 0, label: "BREAK" },
       special: { duration: .7, active: [.2, .48], damage: 25, range: 310, cost: 38, label: fighter.config.technique }
     };
-    const spec = specs[kind];
+    let spec = specs[kind];
+    if (kind === "special" && fighter.config.special) spec = { ...spec, ...fighter.config.special };
     if (!spec || fighter.energy < spec.cost) {
       if (kind === "special") {
         ui.hint.textContent = "NOT ENOUGH CURSED ENERGY.";
@@ -391,19 +399,20 @@
     ui.enemyHealth.style.width = (enemy.health / enemy.maxHealth * 100) + "%";
     ui.enemyEnergy.style.width = enemy.energy + "%";
     ui.timer.textContent = String(Math.ceil(roundTime)).padStart(2, "0");
-    if (roundTime <= 0) finishMatch(player.health >= enemy.health, true);
+    if (roundTime <= 0) finishMatch(player.health / player.maxHealth >= enemy.health / enemy.maxHealth, true);
   }
 
   function drawBackground() {
+    const scene = missions[mode === "intro" || mode === "missions" ? selectedMission : missionIndex].scene;
     const sky = ctx.createLinearGradient(0, 0, 0, HEIGHT);
-    sky.addColorStop(0, "#111020");
-    sky.addColorStop(.48, "#25203b");
-    sky.addColorStop(1, "#100e18");
+    sky.addColorStop(0, scene.top);
+    sky.addColorStop(.48, scene.mid);
+    sky.addColorStop(1, scene.bottom);
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
     const haze = ctx.createRadialGradient(630, 270, 20, 630, 270, 520);
-    haze.addColorStop(0, "rgba(145,91,206,.24)");
+    haze.addColorStop(0, scene.haze);
     haze.addColorStop(1, "rgba(145,91,206,0)");
     ctx.fillStyle = haze;
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -423,7 +432,7 @@
     ctx.fillStyle = "rgba(220,205,245,.72)"; ctx.beginPath(); ctx.arc(825, 168, 39, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
 
-    ctx.fillStyle = "#171424";
+    ctx.fillStyle = scene.buildings;
     for (const b of skyline) {
       ctx.fillRect(b.x, 370 - b.h, b.w, b.h + 100);
       ctx.fillStyle = "rgba(171,135,222,.13)";
@@ -443,12 +452,12 @@
     ctx.restore();
 
     const floorGlow = ctx.createLinearGradient(0, 430, 0, HEIGHT);
-    floorGlow.addColorStop(0, "rgba(101,70,143,.18)");
+    floorGlow.addColorStop(0, scene.floor);
     floorGlow.addColorStop(.4, "rgba(24,20,35,.92)");
     floorGlow.addColorStop(1, "#0a0910");
     ctx.fillStyle = floorGlow; ctx.fillRect(0, 430, WIDTH, HEIGHT - 430);
 
-    ctx.strokeStyle = "rgba(180,147,236,.16)";
+    ctx.strokeStyle = scene.grid;
     ctx.lineWidth = 1;
     for (let i = 0; i < 13; i++) {
       const y = 475 + i * i * 1.25;
@@ -535,8 +544,45 @@
       ctx.beginPath(); ctx.moveTo(23, -120); ctx.lineTo(43 + armSwing, -96 - armSwing * .45); ctx.lineTo(51 + armSwing, -83 - armSwing * .6); ctx.stroke();
       ctx.fillStyle = "#e6b6a8"; ctx.beginPath(); ctx.arc(-34, -71, 9, 0, Math.PI * 2); ctx.arc(51 + armSwing, -83 - armSwing * .6, 9, 0, Math.PI * 2); ctx.fill();
       if (fighter.attack && fighter.attack.kind === "special") {
-        ctx.strokeStyle = config.accent; ctx.lineWidth = 4; ctx.globalAlpha = .8;
-        ctx.beginPath(); ctx.arc(65 + armSwing, -90, 32 + Math.sin(elapsed * 25) * 6, -.8, .8); ctx.stroke();
+        const pulse = Math.sin(elapsed * 24) * 7;
+        ctx.globalAlpha = .88;
+        if (fighter.characterKey === "gojo") {
+          ctx.shadowColor = config.accent; ctx.shadowBlur = 25;
+          ctx.fillStyle = config.accent + "66";
+          ctx.beginPath(); ctx.arc(115, -100, 25 + pulse, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = "#e5fbff"; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(115, -100, 38 + pulse, 0, Math.PI * 2); ctx.stroke();
+          ctx.strokeStyle = config.accent; ctx.lineWidth = 7;
+          ctx.beginPath(); ctx.moveTo(30, -100); ctx.lineTo(180, -100); ctx.stroke();
+        } else if (fighter.characterKey === "megumi") {
+          ctx.shadowColor = "#10101b"; ctx.shadowBlur = 16;
+          ctx.fillStyle = "#10101b";
+          for (let i = 0; i < 3; i++) {
+            const x = 65 + i * 24;
+            ctx.beginPath(); ctx.moveTo(x - 16, -12); ctx.quadraticCurveTo(x - 8, -100 - pulse, x + 4, -132); ctx.quadraticCurveTo(x + 30, -70, x + 20, -12); ctx.fill();
+          }
+          ctx.strokeStyle = config.accent; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(45, -15); ctx.quadraticCurveTo(105, -105, 175, -16); ctx.stroke();
+        } else if (fighter.characterKey === "nobara") {
+          ctx.shadowColor = config.accent; ctx.shadowBlur = 18;
+          ctx.strokeStyle = "#ffd88a"; ctx.lineWidth = 4;
+          for (let i = 0; i < 5; i++) {
+            const angle = -.8 + i * .4;
+            ctx.save(); ctx.translate(90, -94); ctx.rotate(angle);
+            ctx.beginPath(); ctx.moveTo(0, -43 - pulse); ctx.lineTo(0, -12); ctx.stroke();
+            ctx.fillStyle = "#fff0c3"; ctx.beginPath(); ctx.arc(0, -43 - pulse, 4, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+          }
+          ctx.strokeStyle = config.accent; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(90, -94, 54 + pulse, 0, Math.PI * 2); ctx.stroke();
+        } else {
+          ctx.shadowColor = config.accent; ctx.shadowBlur = 22;
+          ctx.strokeStyle = config.accent; ctx.lineWidth = 7;
+          ctx.beginPath(); ctx.arc(76, -94, 35 + pulse, -.9, .9); ctx.stroke();
+          ctx.strokeStyle = "#fff0fa"; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(45, -110); ctx.lineTo(145, -74); ctx.stroke();
+        }
+        ctx.shadowBlur = 0;
         ctx.globalAlpha = 1;
       }
 

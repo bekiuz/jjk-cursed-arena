@@ -179,7 +179,7 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
 
   function makeStage(index) {
     while (stageRoot.children.length) {
-      const child = stageRoot.children.pop();
+      const child = stageRoot.children[0];
       stageRoot.remove(child);
       child.traverse((obj) => {
         if (obj.geometry) obj.geometry.dispose();
@@ -389,7 +389,6 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
     };
     fighter.visual = buildFighterModel(fighter);
     fighterRoot.add(fighter.visual.root);
-    if (!isEnemy && characterKey === "yuji") attachYujiGLB(fighter);
     return fighter;
   }
 
@@ -454,6 +453,7 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
     const mission = missions[missionIndex];
     clearFighters();
     player = makeFighter(345, false, selectedCharacter);
+    if (selectedCharacter === "yuji") attachYujiGLB(player);
     enemy = makeEnemy(mission);
     roundTime = 90;
     particles.forEach((p) => effectsRoot.remove(p.mesh));
@@ -910,7 +910,7 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
   let yujiLoadStarted = false;
   function attachYujiGLB(fighter) {
     const attach = (gltf) => {
-      if (!fighter || fighter.isEnemy || fighter.characterKey !== "yuji") return;
+      if (!fighter || fighter !== player || fighter.isEnemy || fighter.characterKey !== "yuji") return;
       const model = cloneSkinnedModel(gltf.scene);
       const bounds = new THREE.Box3().setFromObject(model);
       const size = new THREE.Vector3();

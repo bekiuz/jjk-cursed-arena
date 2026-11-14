@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#090912">
+  <meta name="description" content="JJK Cursed Arena — an unofficial browser fighting-game prototype.">
+  <title>JJK Cursed Arena</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./game.js" defer></script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="JJK Cursed Arena home">
+        <span class="brand-mark">領</span>
+        <span><strong>CURSED</strong><small>ARENA / 00<span>1</span></small></span>
+      </a>
+      <div class="top-status"><i></i> TRAINING DOMAIN <span>•</span> TOKYO COLONY</div>
+      <div class="top-right"><span class="version">EARLY BUILD 0.1</span><span class="sound-mark">JUJUTSU HIGH</span></div>
+    </header>
+
+    <section class="game-wrap" aria-label="Fighting game">
+      <div class="arena-topline">
+        <span>EXHIBITION MATCH <b>01</b></span>
+        <span class="topline-center">呪術廻戦 <em>—</em> CURSED ENERGY FIELD</span>
+        <span>BEST OF <b>01</b></span>
+      </div>
+
+      <div class="arena-frame">
+        <div class="hud">
+          <div class="fighter-hud player-hud">
+            <div class="fighter-heading"><span class="fighter-index">01 / SORCERER</span><span class="fighter-name" id="playerName">YUJI ITADORI</span></div>
+            <div class="bar health-bar"><div class="bar-fill" id="playerHealth"></div></div>
+            <div class="energy-row"><span>CURSED ENERGY</span><div class="bar energy-bar"><div class="bar-fill" id="playerEnergy"></div></div></div>
+          </div>
+          <div class="round-clock"><small>TIME</small><strong id="timer">90</strong><span>ROUND 01</span></div>
+          <div class="fighter-hud enemy-hud">
+            <div class="fighter-heading"><span class="fighter-name" id="enemyName">CURSED WRAITH</span><span class="fighter-index">CURSE / GRADE 02</span></div>
+            <div class="bar health-bar"><div class="bar-fill enemy-fill" id="enemyHealth"></div></div>
+            <div class="energy-row"><span>CURSED ENERGY</span><div class="bar energy-bar"><div class="bar-fill enemy-energy" id="enemyEnergy"></div></div></div>
+          </div>
+        </div>
+
+        <canvas id="gameCanvas" width="1200" height="675" aria-label="JJK Cursed Arena match. Use A and D to move, W to jump, S to guard, J and K to strike, L for cursed technique."></canvas>
+        <div class="arena-scanline"></div>
+        <div class="fight-callout" id="fightCallout" aria-live="polite">READY?</div>
+
+        <section class="intro-screen" id="introScreen">
+          <div class="intro-grid"></div>
+          <div class="intro-content">
+            <span class="eyebrow"><i></i> CURSED ENERGY DETECTED</span>
+            <h1>CURSED<br><span>ARENA</span></h1>
+            <p class="intro-copy">A new generation of sorcerers.<br>One arena. No second chances.</p>
+            <div class="selection-label">CHOOSE YOUR SORCERER <span>01 — 04</span></div>
+            <div class="character-picks" id="characterPicks">
+              <button class="character-pick selected" data-character="yuji"><b>虎</b><span>YUJI</span><small>HAND-TO-HAND</small></button>
+              <button class="character-pick" data-character="gojo"><b>六</b><span>GOJO</span><small>LIMITLESS</small></button>
+              <button class="character-pick" data-character="megumi"><b>影</b><span>MEGUMI</span><small>SHADOW STYLE</small></button>
+              <button class="character-pick" data-character="nobara"><b>釘</b><span>NOBARA</span><small>RESONANCE</small></button>
+            </div>
+            <button class="start-button" id="startButton"><span>ENTER THE DOMAIN</span><b>↗</b></button>
+            <small class="intro-foot">UNOFFICIAL FAN-MADE PROTOTYPE <span>•</span> BUILD 001</small>
+          </div>
+        </section>
+
+        <section class="result-screen hidden" id="resultScreen">
+          <span class="eyebrow" id="resultEyebrow">MATCH COMPLETE</span>
+          <h2 id="resultTitle">VICTORY</h2>
+          <p id="resultMessage">The curse has been exorcised.</p>
+          <button class="start-button" id="rematchButton"><span>FIGHT AGAIN</span><b>↻</b></button>
+          <button class="text-button" id="menuButton">CHANGE SORCERER</button>
+        </section>
+      </div>
+
+      <div class="arena-caption">
+        <span><i class="live-dot"></i> LIVE COMBAT SIMULATION</span>
+        <span id="combatHint">KEEP YOUR DISTANCE. READ THE CURSE.</span>
+        <span>© FAN PROJECT <b>—</b> 2026</span>
+      </div>
+
+      <div class="control-deck">
+        <div class="control-copy">
+          <span class="eyebrow">COMBAT SYSTEM</span>
+          <strong>MASTER YOUR CURSED ENERGY</strong>
+          <small>Chain movement, strikes and techniques to control the arena.</small>
+        </div>
+        <div class="key-group"><span class="key">A</span><span class="key">D</span><label>MOVE</label></div>
+        <div class="key-group"><span class="key">W</span><label>JUMP</label></div>
+        <div class="key-group"><span class="key">S</span><label>GUARD</label></div>
+        <div class="key-group"><span class="key">J</span><span class="key">K</span><label>STRIKE</label></div>
+        <div class="key-group"><span class="key special-key">L</span><label>TECHNIQUE</label></div>
+        <div class="key-group"><span class="key">⇧</span><label>DASH</label></div>
+      </div>
+
+      <div class="touch-deck" aria-label="Touch controls">
+        <div class="touch-movement">
+          <button class="touch-button" data-action="left" aria-label="Move left">←</button>
+          <button class="touch-button" data-action="right" aria-label="Move right">→</button>
+          <button class="touch-button" data-action="jump" aria-label="Jump">↑</button>
+        </div>
+        <div class="touch-actions">
+          <button class="touch-button guard-touch" data-action="guard">GUARD</button>
+          <button class="touch-button" data-action="light">J</button>
+          <button class="touch-button" data-action="heavy">K</button>
+          <button class="touch-button special-touch" data-action="special">L</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>DESIGNED FOR THE DOMAIN.</span>
+      <span>ORIGINAL CANVAS VISUALS <b>·</b> NO EXTERNAL ASSETS</span>
+      <a href="https://github.com/bekiuz/jjk-cursed-arena" target="_blank" rel="noreferrer">SOURCE CODE ↗</a>
+    </footer>
+  </main>
+</body>
+</html>

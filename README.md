@@ -1,6 +1,6 @@
 # JJK Cursed Arena
 
-An unofficial browser fighting-game prototype inspired by the world of Jujutsu Kaisen. It currently uses original canvas-drawn visuals and does not bundle third-party character models, textures, audio, or fonts.
+An unofficial browser fighting-game prototype inspired by the world of Jujutsu Kaisen. The current build uses original canvas-drawn visuals and does not bundle third-party character models, textures, audio, or fonts.
 
 ## Play online
 
@@ -26,7 +26,7 @@ Then visit http://localhost:8080.
 | Shift | Dash |
 | J | Quick strike |
 | K | Heavy strike |
-| L | Cursed technique |
+| L | Character-specific cursed technique |
 | R | Retry after a result |
 
 Touch controls are included for mobile devices.
@@ -34,17 +34,18 @@ Touch controls are included for mobile devices.
 ## Current build
 
 - Four selectable fighter presets: Yuji, Gojo, Megumi and Nobara
-- Three story missions: Jujutsu High, Cursed Womb / Detention Center, and Geto's Night Parade chapter
-- Mission unlock progression saved in the browser
-- Three opponent difficulty profiles with different health, speed, damage and color themes
-- Keyboard and touch combat, blocking, dash, special technique, health and cursed-energy meters
+- Three story missions with unlock progression saved in the browser
+- Three arena palettes: Tokyo training grounds, detention center and Night Parade
+- Opponents scale in health, movement speed and damage from chapter to chapter
+- Character-specific special techniques with distinct energy costs, ranges, damage and visual effects
+- Keyboard and touch combat, guarding, dash, health and cursed-energy meters
 - Responsive interface and GitHub Pages deployment workflow
 
 ## Next milestones
 
-1. Refine original character silhouettes and combat animation timing
-2. Give each fighter distinct techniques and move combinations
-3. Add more cursed spirits, story encounters and boss mechanics
-4. Add stage backgrounds, sound effects and accessibility settings
+1. Give every fighter a complete, distinct normal-move set
+2. Add more cursed spirits, story encounters and boss mechanics
+3. Improve character silhouettes and animation timing
+4. Add sound effects, stage details, settings and accessibility options
 
 This is an unofficial fan project and is not affiliated with or endorsed by the creators or rights holders of Jujutsu Kaisen. Third-party characters, names, art, models, music and other assets must only be distributed within the scope of applicable permissions and licenses.

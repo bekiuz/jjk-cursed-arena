@@ -22,9 +22,9 @@
 
     <section class="game-wrap" aria-label="Fighting game">
       <div class="arena-topline">
-        <span>EXHIBITION MATCH <b>01</b></span>
+        <span>STORY ROUTE <b>CHAPTER 01</b></span>
         <span class="topline-center">呪術廻戦 <em>—</em> CURSED ENERGY FIELD</span>
-        <span>BEST OF <b>01</b></span>
+        <span>MISSION <b>01 / 03</b></span>
       </div>
 
       <div class="arena-frame">
@@ -34,9 +34,9 @@
             <div class="bar health-bar"><div class="bar-fill" id="playerHealth"></div></div>
             <div class="energy-row"><span>CURSED ENERGY</span><div class="bar energy-bar"><div class="bar-fill" id="playerEnergy"></div></div></div>
           </div>
-          <div class="round-clock"><small>TIME</small><strong id="timer">90</strong><span>ROUND 01</span></div>
+          <div class="round-clock"><small>TIME</small><strong id="timer">90</strong><span id="missionStageLabel">MISSION 01</span></div>
           <div class="fighter-hud enemy-hud">
-            <div class="fighter-heading"><span class="fighter-name" id="enemyName">CURSED WRAITH</span><span class="fighter-index">CURSE / GRADE 02</span></div>
+            <div class="fighter-heading"><span class="fighter-name" id="enemyName">CURSED WRAITH</span><span class="fighter-index" id="enemyGrade">CURSE / GRADE 02</span></div>
             <div class="bar health-bar"><div class="bar-fill enemy-fill" id="enemyHealth"></div></div>
             <div class="energy-row"><span>CURSED ENERGY</span><div class="bar energy-bar"><div class="bar-fill enemy-energy" id="enemyEnergy"></div></div></div>
           </div>
@@ -59,8 +59,41 @@
               <button class="character-pick" data-character="megumi"><b>影</b><span>MEGUMI</span><small>SHADOW STYLE</small></button>
               <button class="character-pick" data-character="nobara"><b>釘</b><span>NOBARA</span><small>RESONANCE</small></button>
             </div>
-            <button class="start-button" id="startButton"><span>ENTER THE DOMAIN</span><b>↗</b></button>
+            <button class="start-button" id="startButton"><span>CHOOSE STORY MISSION</span><b>↗</b></button>
             <small class="intro-foot">UNOFFICIAL FAN-MADE PROTOTYPE <span>•</span> BUILD 001</small>
+          </div>
+        </section>
+
+        <section class="mission-screen hidden" id="missionScreen">
+          <div class="mission-content">
+            <span class="eyebrow"><i></i> STORY MODE / CHAPTER SELECT</span>
+            <h2>THE CURSED <span>PATH</span></h2>
+            <p class="mission-intro">Your journey begins here. Clear each encounter to unlock the next chapter.</p>
+            <div class="mission-grid">
+              <button class="mission-card selected" data-mission="0">
+                <span class="mission-number">01 / PROLOGUE</span><b>JUJUTSU HIGH</b>
+                <small>TRAINING GROUNDS · GRADE 2</small>
+                <span class="mission-card-desc">A controlled trial against a wandering cursed spirit.</span>
+                <span class="mission-lock">AVAILABLE</span>
+              </button>
+              <button class="mission-card" data-mission="1">
+                <span class="mission-number">02 / INCIDENT</span><b>CURSED WOMB</b>
+                <small>DETENTION CENTER · SPECIAL GRADE</small>
+                <span class="mission-card-desc">A veil descends over an abandoned detention center.</span>
+                <span class="mission-lock">LOCKED</span>
+              </button>
+              <button class="mission-card" data-mission="2">
+                <span class="mission-number">03 / NIGHT PARADE</span><b>GETO'S PLAN</b>
+                <small>TOKYO · FINAL ENCOUNTER</small>
+                <span class="mission-card-desc">The Night Parade begins. Face a powerful curse user.</span>
+                <span class="mission-lock">LOCKED</span>
+              </button>
+            </div>
+            <div class="mission-footer">
+              <span id="missionProgress">MISSIONS CLEARED 0 / 03</span>
+              <button class="text-button" id="missionBack">← BACK</button>
+              <button class="start-button" id="missionStartButton"><span>BEGIN MISSION</span><b>↗</b></button>
+            </div>
           </div>
         </section>
 
@@ -68,8 +101,9 @@
           <span class="eyebrow" id="resultEyebrow">MATCH COMPLETE</span>
           <h2 id="resultTitle">VICTORY</h2>
           <p id="resultMessage">The curse has been exorcised.</p>
-          <button class="start-button" id="rematchButton"><span>FIGHT AGAIN</span><b>↻</b></button>
-          <button class="text-button" id="menuButton">CHANGE SORCERER</button>
+          <button class="start-button" id="rematchButton"><span>RETRY MISSION</span><b>↻</b></button>
+          <button class="start-button hidden" id="nextMissionButton"><span>NEXT MISSION</span><b>↗</b></button>
+          <button class="text-button" id="menuButton">MISSION SELECT</button>
         </section>
       </div>
 

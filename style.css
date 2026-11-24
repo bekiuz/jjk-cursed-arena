@@ -226,6 +226,7 @@ button { color: inherit; }
   }
   .touch-button:active, .touch-button.active { background: #8e6be9; color: #fff; }
   .guard-touch { font-size: 9px; }
+  .dash-touch { min-width: 44px; border-color: rgba(179,154,255,.55); color: #d5c7ff; font-size: 9px; }
   .special-touch { border-color: rgba(116,230,255,.5); color: #a9ebff; }
   .footer { font-size: 6px; letter-spacing: .08em; margin-top: 14px; }
   .footer span:nth-child(2) { display: none; }

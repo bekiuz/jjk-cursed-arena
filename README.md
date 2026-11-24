@@ -32,7 +32,7 @@ Three.js is loaded as ES modules from jsDelivr, so an internet connection is req
 | O | Domain Expansion (requires 100% cursed energy) |
 | R | Retry after a result |
 
-Touch controls are included for mobile devices.
+Touch controls are included for mobile devices, including a dedicated DASH button.
 
 ## Current game systems
 

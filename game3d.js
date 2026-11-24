@@ -900,7 +900,7 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
     v.root.rotation.z = fighter.hitFlash > 0 ? Math.sin(elapsed * 75) * .12 : 0;
     v.body.position.y = Math.sin(elapsed * 7 + (fighter.isEnemy ? 1 : 0)) * (moving ? .018 : .027) + jump * .035;
     v.body.rotation.z = moving ? walk * .045 : idle * .012;
-    v.torso.scale.y = 1 + Math.sin(elapsed * 3.5) * .018;
+    v.torso.scale.y = (fighter.characterKey === "curse" ? 1.3 : 1.06) * (1 + Math.sin(elapsed * 3.5) * .018);
     v.leftLeg.rotation.x = walk * .48 + jump * .42;
     v.rightLeg.rotation.x = -walk * .48 + jump * .42;
     v.leftArm.rotation.x = moving ? -walk * .42 : idle * .045;
@@ -1029,6 +1029,7 @@ import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0
       else if (action === "heavy") queued.add("heavy");
       else if (action === "special") queued.add("special");
       else if (action === "domain") queued.add("domain");
+      else if (action === "dash") queued.add("dash");
     };
     const up = (event) => {
       event.preventDefault();
